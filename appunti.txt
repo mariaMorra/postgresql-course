@@ -1,0 +1,127 @@
+to check if postgrsql is running: windows=>services=>cerca posgres something something sulla lista
+OR
+taskmanager => details => postgres
+--------------
+psql (shell sql)
+-lascia tutto com'è x le configurazioni iniziali (x ora)
+-comando "\l" to see db in psql shell
+
+cluster from cmd
+"comando --help" gives info on comando
+"initdb" initializes a db
+"initdb -D 'locationofdirectorywheretosavefiles' initializes a db wt data (userdata) saved to location specified
+"pg_ctl -D "C:\Users\maria.morra\corsi_udemy\postgresql-course" -l logfile start" x far partire il db specificato sopra => start the CLUSTER
+	BUT!!! WE NEED TO CONFIGURE PORT NUMBER!!!
+	=>modifica file postgresql.conf && start cluster wt 'pg_ctl -D "C:\Users\maria.morra\corsi_udemy\postgresql-course"' -p nuovonumeroport
+		... he says so but it dont work????... might need to run all comand line comands from a "execute as admin" cmd
+"pg_ctl status" to check if server is running	
+"pg_ctl sart" x iniziare std server, NB se variabili di ambiente NON impostate => need to change that up
+"psql -U postgres" (for std user, use name of user for others) to log in on the started server	
+=>accedo a set di comandi e cmd ora ha aspetto postgres=#, posso usare i comandi:
+	"show data_directory;" x vedere directory in db (once logged in)	 
+	"show port;" x controllare port
+	"show work_mem;" visualizza parametro work_mem (from same config file as port)
+	"alter system set nomevar='val';" x cambiare valore di var from config file
+	if u exit after a change wt "EXIT" or "\q" a reload is necessary :
+		=>da normal cmd get back in login
+		select pg_reload_conf() => tells if there is a changed value 
+	"exit" x lasciare il postgres=# (uscire dal client del server?) x tornare al cmd normale
+"pg_ctl stop" x fermare il cluster (now we cannot log in anymore)
+"pg_ctl restart" => kill and restart cluster
+"pg_controldata" gives info on cluster ++ imp
+----------------------------
+x vedere contenuti di data/base folder = database standard (&& where your own will be put)
+->check if server is running: pg_ctl status && entra con psql -U postgres
+"\l" to see nomi db && permessi 
+"select datname,oid from pg_database;" x vedere corrispondenza nomedb e cartella	
+"show max_connections;" mostra val di quel config
+"select name, source,boot_val,sourcefile,pending_restart from pg_settings where name='max_connections';" gives more info on the same config 
+"\d nometable (esempio pg_settings)" to see all columns in a table
+"\conninfo" gives info to connection active (from inside)
+"\c nomedb" changes ccurrent connection, giving new one to specified db 
+"\du" shows all users
+nb
+	template 0 uncurruptable to create new dbs
+	template 1 curruptable to create new dbs (can be reset using template 0)
+	to create a new db u can write: CREATE DATABASE newdb TEMPLATE template0 (or template1);
+		but most times CREATE DATABASE newdb OWNER owner(default postgres); is sufficient
+		and to drop one write DROP DATABASE namedb; (ONLY YOUROWN, DONT TOUCH ANYTHING ELSE FFS)
+	to reset template1 use: CREATE DATABASE template1 (will drop previous version) TEMPLATE template0
+---------------------------------------------
+how to create database:
+create database dbname owner ownername; da dentro psql
+createdb dbname OR createdb -U username (specifica esplicita di user che richiede comando) dbname da semplice command line
+
+how to drop a database
+	nb cannot drop any db to wich currently connected to
+drop database dbname; da dentro
+dropdb -U postgres dbname da fuori
+
+how to create a user, occhio guarda :
+create user username; da dentro
+create user username login superuser password 'welcome';
+createuser -U postgres -P -S press enter write username write password (crea user NON SUPERUSER; con password)da fuori
+createuser -U postgres --interactive for "wizard like creation" easy to follow, requires postgres pass at the end (but cannot set password of NEW user from here?)	
+=>once it exist can be used to login to dbs: psql -U username -d databasename
+
+NB 
+	linux does not need the -U, can do other way
+	i can restrict wich db they can connect to: revoke connect on database dbname from public; (not valid for postgres)
+
+how to drop a user:
+dropuser -U postgres username da fuori
+drop user username; da dentro
+
+NB
+	if user created something in db i cannot drop the user untill all objs are dropped as well
+--------------------------------
+schemas (logical units that contain tables, data types, functions and operators)
+-owned by a db
+-can be created and dropped
+-a user can be restricted to one (or more) schemas in db
+
+to create:
+create schema schemaname;
+create schema autorization username; => create schema username (=> it's NAMED same as the user it belongs to === username) for given user
+create schema if not exists nameschema autorization username=> create (if not existing) schema for user 
+
+to drop:
+drop schema (only possible if no objects inside)
+
+\d shows schemas on db
+
+schema search path is used to determinate where objects will be searched for and in what order the schemas will be searched in
+show search_path; shows current search path => the schema in use at the moment
+
+nb
+	you can have a table wt same name in DIFFERENT schemas!!! to access the table in a given schema (different from default) use "schemaname.tablename" in query
+	&& 
+	you can see all the tables wt same name in different schemas wt
+	select * from pg_tables where tablename='vehicle';
+	also
+	every db has a default schema called postgres that will be OVERTAKEN  deault if we
+		are logged as another user (not postgres)
+		&&
+		have a schema called wt same name as user  
+--------------------------------------
+priviliges say what actions a user can do on cluster or objects; granted by superuser, object creator or user wt grant ability
+change wt 
+	alter user username with option; option può essere like superuser/nosuperuser x definire se è o meno superuser
+	OR	
+	grant actionname on object/database objectname/dbname to username
+	(con varie specifiche possibili)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
